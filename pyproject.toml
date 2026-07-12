@@ -1,0 +1,12 @@
+[project]
+name = "te-qupinn"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "equinox>=0.13.8",
+    "jax[cpu,cuda13]>=0.10.2",
+    "matplotlib>=3.11.0",
+    "optax>=0.2.8",
+]
