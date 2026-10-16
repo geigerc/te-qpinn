@@ -11,7 +11,14 @@ wheels/
 *.npy
 *.eqx
 .vscode/
-
+rez/
+figs/
+*.npz
+!refs/*.npz
+*.png
+!refs/*.png
+tmp/
 
 # Virtual environments
 .venv
+refs/dolfinx.sif

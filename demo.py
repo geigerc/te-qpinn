@@ -8,7 +8,7 @@ import numpy as np
 from pinn_incremental_visualizable import PINN
 
 
-def load_model(trained_path="pinn_incremental.eqx", key=888):
+def load_model(trained_path, key=888):
     key = jr.PRNGKey(key)
     model_key, _ = jr.split(key)
     skeleton = PINN(model_key)

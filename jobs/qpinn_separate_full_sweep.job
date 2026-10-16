@@ -1,0 +1,47 @@
+#!/bin/bash
+#SBATCH --job-name=reup_separate_sweep
+#SBATCH --account=education-ae-bsc-lr
+#SBATCH --partition=gpu-a100
+#SBATCH --gpus-per-task=1
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem-per-cpu=2000M
+#SBATCH --array=0-7
+#SBATCH --output=logs/reup_separate_sweep_%A_%a.out
+#SBATCH --error=logs/reup_separate_sweep_%A_%a.err
+
+cd "$SLURM_SUBMIT_DIR" || exit 1
+
+source .venv/bin/activate
+export OMP_NUM_THREADS=8
+export OPENBLAS_NUM_THREADS=8
+export MKL_NUM_THREADS=8
+
+MAPPINGS=("full" "alternating")
+SAMPLINGS=("uniform" "chebytto" "power" "asymm_tanh")
+
+MAPP_IDX=$(( SLURM_ARRAY_TASK_ID / 4 ))
+SAMP_IDX=$(( SLURM_ARRAY_TASK_ID % 4 ))
+
+CURRENT_MAPP=${MAPPINGS[$MAPP_IDX]}
+CURRENT_SAMP=${SAMPLINGS[$SAMP_IDX]}
+
+RUN_NAME="separate_${CURRENT_SAMP}_${CURRENT_MAPP}"
+BASE_CONFIG="cfgs/template.toml"
+TMP_CONFIG="cfgs/tmp_${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}.toml"
+OUT_DIR="rez/${RUN_NAME}"
+
+mkdir -p "$OUT_DIR" logs
+
+trap 'rm -f "$TMP_CONFIG"' EXIT
+
+sed -e "s/mapping = .*/mapping = \"${CURRENT_MAPP}\"/" \
+    -e "s/sampling = .*/sampling = \"${CURRENT_SAMP}\"/" \
+    -e "s/run_name = .*/run_name = \"${RUN_NAME}\"/" \
+    "$BASE_CONFIG" > "$TMP_CONFIG"
+
+echo "[$(date +%H:%M:%S)] launching ${RUN_NAME} (task ${SLURM_ARRAY_TASK_ID})"
+python qpinn_sweepable.py -c "$TMP_CONFIG" -o "$OUT_DIR"
+
+echo "[$(date +%H:%M:%S)] done."

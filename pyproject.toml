@@ -6,7 +6,10 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "equinox>=0.13.8",
-    "jax[cpu,cuda13]>=0.10.2",
+    "felupe[all]>=10.1.0",
+    "jax[cpu,cuda13]<0.11",
+    "jaxlib<0.11",
     "matplotlib>=3.11.0",
     "optax>=0.2.8",
+    "pennylane>=0.45.1",
 ]

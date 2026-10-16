@@ -1,0 +1,46 @@
+#!/bin/bash
+#SBATCH --job-name=sym
+#SBATCH --account=education-ae-bsc-lr
+#SBATCH --partition=gpu-a100
+#SBATCH --gpus-per-task=1
+#SBATCH --time=00:15:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=32
+#SBATCH --mem-per-cpu=2000M
+#SBATCH --array=0
+#SBATCH --output=logs/sym_%j.out
+#SBATCH --error=logs/sym_%j.err
+
+cd "$SLURM_SUBMIT_DIR" || exit 1
+
+source .venv/bin/activate
+export OMP_NUM_THREADS=32
+export OPENBLAS_NUM_THREADS=32
+export MKL_NUM_THREADS=32
+
+SEEDS=("4444" "4448" "4488" "4888" "8888")
+
+SEED_IDX=$(( SLURM_ARRAY_TASK_ID % 5 ))
+
+CURRENT_SEED=${SEEDS[$SEED_IDX]}
+
+RUN_NAME="qa_d1_w3_L3_periodic_s${CURRENT_SEED}_sym"
+BASE_CONFIG="cfgs/template.toml"
+TMP_CONFIG="cfgs/tmp_${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}.toml"
+OUT_DIR="rez/${RUN_NAME}"
+
+trap 'rm -f "$TMP_CONFIG"' EXIT
+
+sed -e "s/depth = .*/depth = 1/" \
+    -e "s/width = .*/width = 3/" \
+    -e "s/n_layers = .*/n_layers = 3/" \
+    -e "s/topology = .*/topology = \"periodic\"/" \
+    -e "s/mapping = .*/mapping = \"full\"/" \
+    -e "s/seed = .*/seed = ${CURRENT_SEED}/" \
+    -e "s/run_name = .*/run_name = \"${RUN_NAME}\"/" \
+    "$BASE_CONFIG" > "$TMP_CONFIG"
+
+echo "[$(date +%H:%M:%S)] launching ${RUN_NAME} (task ${SLURM_ARRAY_TASK_ID})"
+python qpinn_sweepable_sym.py -c "$TMP_CONFIG" -o "$OUT_DIR"
+
+echo "[$(date +%H:%M:%S)] done."

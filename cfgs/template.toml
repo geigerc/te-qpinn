@@ -1,0 +1,53 @@
+[meta]
+run_name = "template"
+seed = 888
+
+[architecture]
+mode = "separate" # "separate" | "shared"
+
+[qc]
+n_wires = 2
+n_layers = 3
+diff_method = "backprop" # "backprop" | "parameter-shift"
+pauli_gates = ["rx", "ry", "rz"]
+
+[qc.entangle]
+gate = "isingzz" # "cry" | "cnot" | "cz" | "isingzz"
+layers = [0, 1, 2] # 0-indexed layer indices that apply entanglement
+topology = "linear" # "linear" | "periodic"
+
+[qc.reuploading]
+mapping = "first" # "full" | "alternating" | "per-wire" | "first" | "last" | "custom"
+wire_control = 0 # 0-based wire index (used when mapping = "per-wire")
+custom_mask = [[1, 0], [0, 1], [0, 0]] # [n_layers][n_wires], 1 = encode, 0 = skip
+custom_mask_x = [[1, 1], [1, 0], [1, 0]] # optional mask override for ux (mode="separate")
+custom_mask_y = [[0, 0], [1, 0], [1, 1]] # optional mask override for uy (mode="separate")
+
+[fnn]
+depth = 2
+width = 20
+activation = "tanh"
+
+[material]
+youngs = 3.5
+poisson = 0.45
+
+[loading]
+traction_x = 2.0
+n_stages = 20
+step_epochs = 1000
+
+[domain]
+grid_size = 100
+sampling = "chebytto" # "uniform" | "chebytto" | "power" | "asymm_tanh"
+
+[loss]
+lda_penalty_j = 1000.0
+lda_neumann = 1.0
+lda_physics = 1.0
+
+[optimizer]
+init_lr = 0.002
+transition_steps = 20000
+decay_rate = 0.5
+
